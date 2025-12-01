@@ -120,6 +120,17 @@ CLI command; the local script will send chunk payloads to the Worker, which hand
 embeddings + Vectorize upserts via its bindings. This avoids exposing the raw API
 and matches Cloudflare’s best practices.
 
+### Query endpoint
+
+The Worker also exposes a lightweight search API:
+
+```bash
+curl "https://<worker-domain>/search?q=conscious%20hip-hop&topK=5"
+```
+
+The JSON response (`{ ok: true, matches: [...] }`) includes metadata (release, title,
+path). Use it to back your site search or feed a chatbot/autorag pipeline.
+
 LangChain’s official examples show the same bindings for Cloudflare Vectorize + Workers AI; you can lift patterns as needed. ([LangChain][5])
 
 **What to ingest:** for each track, send:

@@ -36,6 +36,11 @@
   - Requires `requests` (`pip install requests`).  
   - Store chunk IDs and metadata alongside track IDs for the site chatbot + search.
 
+7.1 **Vectorize Query API**  
+- The same Worker exposes `GET /search?q=...&topK=5` to embed a query and return matches (metadata + distances).  
+- Example: `curl "https://lyrical-vector-ingest.selene.workers.dev/search?q=truth%20music&topK=5"`.  
+- Responses include `{ ok: true, matches: [...] }` and can power site search or chatbot context.
+
 8. **Deploy UI / Widgets**  
    - Astro/Next.js site pulls from the API (Workers) or static manifest.  
    - WordPress/Drupal/Ghost use exporters.  

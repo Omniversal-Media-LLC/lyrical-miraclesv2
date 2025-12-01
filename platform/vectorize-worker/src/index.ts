@@ -65,11 +65,57 @@ async function handleIngest(request: Request, env: Env): Promise<Response> {
   });
 }
 
+async function handleSearch(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const query = url.searchParams.get("q")?.trim();
+  if (!query) {
+    return new Response(
+      JSON.stringify({ ok: false, error: "Missing query param 'q'" }),
+      { status: 400, headers: { "content-type": "application/json" } },
+    );
+  }
+
+  const topK = Math.min(
+    Math.max(Number(url.searchParams.get("k") ?? url.searchParams.get("topK") ?? 5) || 5, 1),
+    20,
+  );
+
+  try {
+    const embeddingResponse = await env.AI.run(EMBED_MODEL, { text: query });
+    const vector = Array.isArray(embeddingResponse?.data)
+      ? (embeddingResponse.data[0] as number[])
+      : undefined;
+    if (!vector || vector.length === 0) {
+      throw new Error("Failed to generate embedding for query");
+    }
+
+    const results = await env.VECTORIZE_INDEX.query({
+      vector,
+      topK,
+      includeVectors: false,
+      returnMetadata: true,
+    });
+
+    return new Response(JSON.stringify({ ok: true, matches: results.matches ?? results }), {
+      headers: { "content-type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Vectorize search failed", error);
+    return new Response(
+      JSON.stringify({ ok: false, error: (error as Error).message ?? "Unknown error" }),
+      { status: 500, headers: { "content-type": "application/json" } },
+    );
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     if (url.pathname === "/ingest" && request.method === "POST") {
       return handleIngest(request, env);
+    }
+    if (url.pathname === "/search" && request.method === "GET") {
+      return handleSearch(request, env);
     }
     return new Response("Not Found", { status: 404 });
   },
