@@ -11,6 +11,20 @@ type ChunkPayload = {
 
 const EMBED_MODEL = "@cf/baai/bge-base-en-v1.5";
 
+function describeEmbeddingResponse(response: unknown) {
+  const payload = response as { data?: unknown; result?: { data?: unknown } };
+  const dataArray = payload?.data as unknown[] | undefined;
+  const resultArray = payload?.result?.data as unknown[] | undefined;
+  return {
+    hasDataArray: Array.isArray(dataArray),
+    hasResultDataArray: Array.isArray(resultArray),
+    dataType:
+      dataArray?.[0]?.constructor?.name ?? resultArray?.[0]?.constructor?.name ?? null,
+    dataLength: Array.isArray(dataArray?.[0]) ? (dataArray?.[0] as unknown[]).length : null,
+    preview: Array.isArray(dataArray?.[0]) ? (dataArray?.[0] as number[]).slice(0, 3) : null,
+  };
+}
+
 function extractEmbedding(response: unknown): number[] | undefined {
   if (!response || typeof response !== "object") {
     return undefined;
@@ -109,17 +123,14 @@ async function handleSearch(request: Request, env: Env): Promise<Response> {
   );
 
   try {
+    const debug = url.searchParams.get("debug") === "1";
     const embeddingResponse = await env.AI.run(EMBED_MODEL, { text: query });
-    console.log("search embedding shape", {
-      hasDataArray: Array.isArray((embeddingResponse as { data?: unknown[] })?.data),
-      hasResultDataArray: Array.isArray(
-        (embeddingResponse as { result?: { data?: unknown[] } })?.result?.data,
-      ),
-      firstType:
-        (embeddingResponse as { data?: unknown[] })?.data?.[0]?.constructor?.name ??
-        (embeddingResponse as { result?: { data?: unknown[] } })?.result?.data?.[0]?.constructor?.name ??
-        null,
-    });
+    if (debug) {
+      return new Response(
+        JSON.stringify({ ok: true, debug: describeEmbeddingResponse(embeddingResponse) }),
+        { headers: { "content-type": "application/json" } },
+      );
+    }
     const vector = extractEmbedding(embeddingResponse);
     if (!vector || vector.length === 0) {
       throw new Error("Failed to generate embedding for query");
