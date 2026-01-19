@@ -1,0 +1,16 @@
+name: lyrical-miraclesv2
+id: ari:cloud:compass:98f239cf-fa04-4e2c-9e89-76b3496a9eb7:component/a3221818-8bba-4a60-9c87-7791b8e38c12/207d23f8-d25a-42ba-b1d6-d0c97a610f33
+description: null
+configVersion: 1
+typeId: SERVICE
+fields:
+  tier: 4
+links:
+  - name: null
+    type: REPOSITORY
+    url: https://github.com/Omniversal-Media-LLC/lyrical-miraclesv2
+relationships:
+  DEPENDS_ON: []
+labels:
+  - source:github
+customFields: null
